@@ -1,7 +1,7 @@
-import {useCallback} from 'react'
+import {useCallback, useEffect, useState} from 'react'
 import Quill from "quill"
 import "quill/dist/quill.snow.css"
-
+import {io} from "socket.io-client"
 const TOOLBAR_OPTIONS = [
     [{header: [1,2,3,4,5,6, false]}],
     [{font: []}],
@@ -15,6 +15,23 @@ const TOOLBAR_OPTIONS = [
 ]
 
 export default function TextEditor() {
+    const [socket, setSocket] = useState()
+    const [quill, setQuill] = useState()
+
+    useEffect(() =>{
+      const s = io("http://localhost:3001")
+      setSocket(s)
+
+        return () => {
+            s.disconnect()
+        }
+    }, [])
+
+        useEffect(() => {
+            quill.on('text-change', (delta, oldDelta, source) =>{
+                if(source !=='user') return
+            })
+        })
 
     const wrapperRef = useCallback(wrapper => {
         if (wrapper == null) return
@@ -23,8 +40,9 @@ export default function TextEditor() {
         const editor = document.createElement('div')
 
         wrapper.append(editor)
-        new Quill (editor, {theme: 'snow', modules: {toolbar:
+       const q = new Quill (editor, {theme: 'snow', modules: {toolbar:
         TOOLBAR_OPTIONS}})
+        setQuill(q)
     }, [])
     return <div className="container" ref={wrapperRef}></div>
 }
